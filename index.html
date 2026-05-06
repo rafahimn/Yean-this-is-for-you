@@ -1783,12 +1783,12 @@
                 });
         });
 
-        // কনফিগারেশন
+        // ======= কনফিগারেশন - সন্ধ্যা ৭টা =======
         const CONFIG = {
-            month: 4,        // মার্চ
-            day: 6,
-            hour: 19,         // রাত ১২:০০ AM
-            minute: 0,
+            month: 4,        // 4 = মে (0=জানুয়ারি, 1=ফেব্রুয়ারি, 2=মার্চ, 3=এপ্রিল, 4=মে)
+            day: 6,          // ৬ তারিখ
+            hour: 19,        // সন্ধ্যা ৭টা (24-ঘণ্টা ফরম্যাটে 19 = 7 PM)
+            minute: 0,       // ৫ মিনিট (সন্ধ্যা ৭টা ৫ মিনিট)
             age: 17,
             name: "Natu.."
         };
@@ -1938,7 +1938,6 @@
         // Touch এবং click ইভেন্ট হ্যান্ডলার
         document.body.addEventListener('click', handleGlobalClick);
         document.body.addEventListener('touchend', function(e) {
-            // শুধুমাত্র যদি ইউজার কোনো বাটন বা লিঙ্কে ক্লিক না করে
             if (!e.target.closest('button') && !e.target.closest('a') && !e.target.closest('input') && !e.target.closest('textarea')) {
                 handleGlobalClick(e);
             }
@@ -2001,24 +2000,49 @@
         }
 
         function formatHour(hour) {
-            return hour % 12 || 12;
+            let h = hour % 12;
+            if (h === 0) h = 12;
+            return h;
         }
 
         function updateCountdown() {
             const now = new Date();
+            const currentYear = now.getFullYear();
             
+            // ডিবাগ লগ (কনসোলে চেক করার জন্য)
+            console.log('🕐 Current time:', now.toString());
+            console.log('📅 Current month (0-11):', now.getMonth(), '| Config month:', CONFIG.month);
+            console.log('📆 Current date:', now.getDate(), '| Config day:', CONFIG.day);
+            console.log('⏰ Current hour:', now.getHours(), '| Config hour:', CONFIG.hour);
+            console.log('⏱️ Current minute:', now.getMinutes(), '| Config minute:', CONFIG.minute);
+            
+            // জন্মদিন চেক: মাস ও দিন মিলাতে হবে
             const isBirthdayToday = (
                 now.getMonth() === CONFIG.month && 
                 now.getDate() === CONFIG.day
             );
             
+            // সময় পেরিয়েছে কিনা চেক (ঘন্টা ও মিনিট)
+            const isTimeReached = (
+                now.getHours() > CONFIG.hour || 
+                (now.getHours() === CONFIG.hour && now.getMinutes() >= CONFIG.minute)
+            );
+            
+            console.log('🎂 Is birthday today?', isBirthdayToday);
+            console.log('⌛ Is time reached?', isTimeReached);
+            console.log('✅ Both conditions?', isBirthdayToday && isTimeReached);
+            
+            // কাউন্টডাউন মেসেজ আপডেট
             const timeSuffix = getTimeSuffix(CONFIG.hour);
             const displayHour = formatHour(CONFIG.hour);
             const minuteStr = CONFIG.minute.toString().padStart(2, '0');
             document.getElementById('countdownMessage').innerHTML = 
                 `⏰ Time-lap at ${CONFIG.day} ${getMonthName(CONFIG.month)} ${displayHour}:${minuteStr} ${timeSuffix}!`;
             
-            if (isBirthdayToday) {
+            // যদি জন্মদিনের দিন এবং সময় হয়ে যায়
+            if (isBirthdayToday && isTimeReached) {
+                console.log('🎉 BIRTHDAY TIME! Showing greeting screen...');
+                
                 if (!countdownFinished) {
                     countdownFinished = true;
                     countdownAudio.pause();
@@ -2038,10 +2062,10 @@
                     birthdayAudio.play()
                         .then(() => { 
                             birthdayAudioPlayed = true; 
-                            console.log("🎵 Birthday audio started automatically after countdown");
+                            console.log("🎵 Birthday audio started");
                         })
                         .catch(error => {
-                            console.log("⚠️ Autoplay failed, showing play button:", error);
+                            console.log("⚠️ Autoplay failed:", error);
                             document.getElementById('playBtn').classList.remove('hide');
                         });
                 }
@@ -2050,18 +2074,22 @@
                 return;
             }
             
+            // কাউন্টডাউন মোড
             countdownFinished = false;
             document.getElementById('greetingScreen').classList.remove('show');
             document.getElementById('countdownScreen').classList.remove('hide');
             
-            const currentYear = now.getFullYear();
+            // পরবর্তী জন্মদিনের টার্গেট সেট
             let birthday = new Date(currentYear, CONFIG.month, CONFIG.day, CONFIG.hour, CONFIG.minute, 0);
             
-            if (now > birthday) {
+            // যদি বর্তমান টার্গেট পেরিয়ে যায়, পরের বছর নেবে
+            if (now >= birthday) {
                 birthday = new Date(currentYear + 1, CONFIG.month, CONFIG.day, CONFIG.hour, CONFIG.minute, 0);
+                console.log('📅 Target moved to next year:', birthday.toString());
             }
             
             const diff = birthday - now;
+            console.log('⏳ Time remaining (ms):', diff);
             
             if (diff > 0) {
                 const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -2073,8 +2101,17 @@
                 document.getElementById('hours').textContent = String(hours).padStart(2, '0');
                 document.getElementById('mins').textContent = String(mins).padStart(2, '0');
                 document.getElementById('secs').textContent = String(secs).padStart(2, '0');
+            } else {
+                // diff <= 0 মানে সময় এসে গেছে, রিফ্রেশ করো
+                console.log('⚡ Time reached! Refreshing...');
+                document.getElementById('days').textContent = '00';
+                document.getElementById('hours').textContent = '00';
+                document.getElementById('mins').textContent = '00';
+                document.getElementById('secs').textContent = '00';
+                updateCountdown(); // রিকার্সিভ কল
             }
             
+            // শেষ ১০ সেকেন্ডে কাউন্টডাউন অডিও
             if (diff <= 10000 && diff > 0 && !countdownAudioPlayed && audioAllowed) {
                 countdownAudio.play().then(() => { 
                     countdownAudioPlayed = true; 
@@ -2166,7 +2203,6 @@
         window.blowCandle = function(index) {
             if (cakeCut || candlesBlown === totalCandles || index < candlesBlown) return;
             
-            // মোবাইলের জন্য ভাইব্রেশন ফিডব্যাক
             if (window.navigator && window.navigator.vibrate) {
                 window.navigator.vibrate(30);
             }
@@ -2381,6 +2417,13 @@
         function confetti(options) { 
             if (typeof window.confetti === 'function') window.confetti(options); 
         }
+
+        // ======= টেস্ট মোড - সরাসরি চেক করতে চাইলে =======
+        // নিচের লাইনটি আনকমেন্ট করলে সরাসরি গ্রিটিং স্ক্রিন দেখাবে (টেস্টিং এর জন্য)
+        // document.getElementById('countdownScreen').classList.add('hide');
+        // document.getElementById('greetingScreen').classList.add('show');
+        // if (!confettiShown) { confettiShown = true; confetti({ particleCount: 100, spread: 70 }); }
+        // if (charIndex === 0) typeGreeting();
 
         // ইনিশিয়ালাইজেশন
         updateCountdown();
