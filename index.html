@@ -1505,8 +1505,7 @@
                 -webkit-overflow-scrolling: touch;
             }
         }
-        
-        /* ছোট মোবাইল ডিভাইসের জন্য */
+
         @media (max-width: 360px) {
             .count-item {
                 padding: 8px 10px;
@@ -1778,10 +1777,10 @@
         });
 
         const CONFIG = {
-            month: 4,        // মে (0-indexed)
-            day: 6,
-            hour: 19,        // 7 PM
-            minute: 33,
+            month: 4,      
+            day: 8,
+            hour: 0,       
+            minute: 0,
             age: 17,
             name: "Natu.."
         };
@@ -1921,8 +1920,7 @@
                 document.getElementById('playBtn').classList.add('hide');
                 console.log('✅ Audio permission granted by user interaction');
             }
-            
-            // শুধুমাত্র জন্মদিনের সঠিক সময় পার হলেই উইশ অডিও চালু হবে
+
             if (isBirthdayMoment() && !birthdayAudioPlayed) {
                 birthdayAudio.play()
                     .then(() => { 
@@ -2372,7 +2370,6 @@
             if (typeof window.confetti === 'function') window.confetti(options); 
         }
 
-        // ইনিশিয়ালাইজেশন
         updateCountdown();
         setInterval(updateCountdown, 1000);
 
@@ -2383,7 +2380,6 @@
             if (resetTimer) clearTimeout(resetTimer); 
         });
 
-        // মোবাইল ভিউপোর্ট হাইট ফিক্স
         function setVH() {
             let vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
